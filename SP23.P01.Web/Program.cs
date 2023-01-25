@@ -4,6 +4,10 @@ using SP23.P01.Web.Data;
 
 var builder = WebApplication.CreateBuilder(args);
 
+var dataContext = builder.Services.AddDbContext<DataContext>(options =>
+    options.UseSqlServer(builder.Configuration.GetConnectionString("DataContext")));
+
+
 // Add services to the container.
 
 builder.Services.AddControllers();
@@ -11,7 +15,9 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
+
 var app = builder.Build();
+
 
 using (var scope = app.Services.CreateScope())
 {
@@ -19,12 +25,14 @@ using (var scope = app.Services.CreateScope())
     db.Database.Migrate();
 }
 
+
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
     app.UseSwaggerUI();
 }
+
 
 app.UseHttpsRedirection();
 

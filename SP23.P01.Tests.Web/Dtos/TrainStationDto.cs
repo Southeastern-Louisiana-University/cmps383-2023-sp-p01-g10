@@ -1,6 +1,7 @@
-﻿namespace SP23.P01.Tests.Web.Dtos;
+﻿using Microsoft.EntityFrameworkCore;
+namespace SP23.P01.Tests.Web.Dtos;
 
-internal class TrainStationDto
+internal class TrainStationDto 
 {
     public int Id { get; set; }
 
