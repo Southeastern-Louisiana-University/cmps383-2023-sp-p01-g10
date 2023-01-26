@@ -1,5 +1,4 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore.Storage;
 using SP23.P01.Web.Data;
 using SP23.P01.Web.Entities;
 
@@ -9,88 +8,75 @@ namespace SP23.P01.Web.Controllers
     [Route("api/stations")]
     public class TrainStationsController : Controller
     {
-        private readonly DataContext _dataContext;
+        private readonly DataContext dataContext;
 
         public TrainStationsController(DataContext dataContext)
         {
-            _dataContext = dataContext;
+            this.dataContext = dataContext;
         }
 
         [HttpGet]
-        public ActionResult GetAll()
+        public ActionResult<TrainStationDto[]> GetAll()
         {
-            var response = new HttpResponseMessage();
+            var trains = dataContext.Set<TrainStation>();
 
-            var stationsToReturn = _dataContext
-                .TrainStation
-                .Select(item => new TrainStationDto
+            return Ok(trains.Select(x => new TrainStationDto
+            {
+                Id = x.Id,
+                Name = x.Name,  
+                Address = x.Address
+            }));
+        }
+        
+        [HttpGet]
+        [Route("{id}")]
+        public ActionResult<TrainStationDto> GetById(int id)
+        {
+            var trains = dataContext.Set<TrainStation>();
+
+            var result = (trains
+                .Where(x => x.Id == id)
+                .Select(x => new TrainStationDto
                 {
-                    Id = item.Id,
-                    Name = item.Name,
-                    Address = item.Address
-                })
-                .ToList();
-            
-            if (stationsToReturn.Capacity == 0)
+                    Id = x.Id,
+                    Name = x.Name,
+                    Address = x.Address
+                }).FirstOrDefault());
+
+            if (result == null)
             {
-                response.StatusCode = System.Net.HttpStatusCode.NotFound;
-                return BadRequest(response);
-            }
-            
-            // response. = stationsToReturn;
-            return Ok(response);
-        }
-
-        [HttpGet("{stationId:int}")]
-        public ActionResult GetTrainStation([FromRoute] int stationId)
-        {
-            var response = new HttpResponseMessage();
-
-            var stationFromDb  = _dataContext.TrainStation.FirstOrDefault(x => x.Id == stationId);
-
-            if (stationFromDb == null) 
-            {
-                response.StatusCode = System.Net.HttpStatusCode.NotFound;
-                return BadRequest(response);
+                //result = NotFound();
             }
 
-            var stationToReturn = new TrainStationDto
-            {
-                Id = stationFromDb.Id,
-                Name = stationFromDb.Name,
-                Address = stationFromDb.Address
-            };
-
-            return Ok(response);
+            return Ok(result);
         }
-
+        
         [HttpPost]
-        public ActionResult CreateStation(TrainStationDto trainStationCreateDto)
+        public ActionResult CreateTrainStation(TrainStationDto trainStationCreateDto)
         {
             var response = new HttpResponseMessage();
-
+            
             if (trainStationCreateDto == null)
             {
                 response.StatusCode = System.Net.HttpStatusCode.NotFound;
-            }
-
-            if (string.IsNullOrEmpty(trainStationCreateDto.Name?.Trim()))
-            {
-                response.StatusCode = System.Net.HttpStatusCode.BadRequest;
-            }
-
-            if (string.IsNullOrEmpty(trainStationCreateDto.Address?.Trim()))
-            {
-                response.StatusCode = System.Net.HttpStatusCode.BadRequest;
+                return BadRequest(response);
             }
 
             if (trainStationCreateDto.Name != null && trainStationCreateDto.Name.Length > 120)
             {
                 response.StatusCode = System.Net.HttpStatusCode.BadRequest;
+                return BadRequest(response);
             }
 
-            if (!response.IsSuccessStatusCode)
+            if (string.IsNullOrEmpty(trainStationCreateDto.Address?.Trim()))
             {
+                response.StatusCode = System.Net.HttpStatusCode.Forbidden;
+                return BadRequest(response);
+            }
+            
+            if (string.IsNullOrEmpty(trainStationCreateDto.Name?.Trim()))
+            {
+                response.StatusCode = System.Net.HttpStatusCode.BadRequest;
                 return BadRequest(response);
             }
 
@@ -100,8 +86,8 @@ namespace SP23.P01.Web.Controllers
                 Address = trainStationCreateDto.Address
             };
 
-            _dataContext.TrainStation.Add(stationToCreate);
-            _dataContext.SaveChanges();
+            dataContext.TrainStation.Add(stationToCreate);
+            dataContext.SaveChanges();
 
             var stationToReturn = new TrainStationDto
             {
@@ -111,15 +97,15 @@ namespace SP23.P01.Web.Controllers
             };
 
             response.StatusCode = System.Net.HttpStatusCode.Created;
-            return Ok(response.StatusCode);
+            return Ok(response);
         }
 
         [HttpPut("{stationId:int}")]
-        public ActionResult EditStation([FromRoute] int stationId, [FromBody] TrainStationDto trainStationEditDto)
+        public ActionResult EditTrainStation([FromRoute] int stationId, [FromBody] TrainStationDto trainStationEditDto)
         {
             var response = new HttpResponseMessage();
 
-            var stationToEdit = _dataContext.TrainStation.FirstOrDefault(x => x.Id == stationId);
+            var stationToEdit = dataContext.TrainStation.FirstOrDefault(x => x.Id == stationId);
 
             if (trainStationEditDto == null)
             {
@@ -146,7 +132,7 @@ namespace SP23.P01.Web.Controllers
             stationToEdit.Name = trainStationEditDto.Name;
             stationToEdit.Address = trainStationEditDto.Address;
 
-            _dataContext.SaveChanges();
+            dataContext.SaveChanges();
 
             var stationToReturn = new TrainStationDto
             {
@@ -159,11 +145,11 @@ namespace SP23.P01.Web.Controllers
         }
 
         [HttpDelete("{stationId:int}")]
-        public ActionResult DeleteStation([FromRoute] int stationId)
+        public ActionResult DeleteTrainStation([FromRoute] int stationId)
         {
             var response = new HttpResponseMessage();
 
-            var stationToDelete = _dataContext.TrainStation.FirstOrDefault(x => x.Id == stationId);
+            var stationToDelete = dataContext.TrainStation.FirstOrDefault(x => x.Id == stationId);
 
             if (stationToDelete == null)
             {
@@ -171,8 +157,8 @@ namespace SP23.P01.Web.Controllers
                 return BadRequest(response);
             }
 
-            _dataContext.TrainStation.Remove(stationToDelete);
-            _dataContext.SaveChanges();
+            dataContext.TrainStation.Remove(stationToDelete);
+            dataContext.SaveChanges();
 
             return Ok(response);
         }
