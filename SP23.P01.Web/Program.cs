@@ -20,7 +20,7 @@ var app = builder.Build();
 using (var scope = app.Services.CreateScope())
 {
     var services = scope.ServiceProvider;
-    var db = services.GetRequiredService<DbContext>();
+    var db = services.GetRequiredService<DataContext>();
 
     db.Database.Migrate();
 
