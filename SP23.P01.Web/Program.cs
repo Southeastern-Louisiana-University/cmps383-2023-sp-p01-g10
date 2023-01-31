@@ -20,15 +20,12 @@ var app = builder.Build();
 using (var scope = app.Services.CreateScope())
 {
     var services = scope.ServiceProvider;
+    var db = services.GetRequiredService<DbContext>();
+
+    db.Database.Migrate();
+
     SeedData.Initialize(services);
 }
-
-using (var scope = app.Services.CreateScope())
-{
-    var db = scope.ServiceProvider.GetRequiredService<DataContext>();
-    db.Database.Migrate();
-}
-
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
